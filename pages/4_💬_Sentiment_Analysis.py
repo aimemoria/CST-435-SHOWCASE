@@ -45,13 +45,31 @@ except:
     SKLEARN_AVAILABLE = False
 
 # Initialize session state
-if 'openai_api_key' not in st.session_state:
-    st.session_state.openai_api_key = ""
 if 'sentiment_model' not in st.session_state:
     st.session_state.sentiment_model = None
     st.session_state.vectorizer = None
 if 'model_trained' not in st.session_state:
     st.session_state.model_trained = False
+
+# Get API key from Streamlit secrets or environment
+def get_api_key():
+    """Get OpenAI API key from secrets or return None"""
+    try:
+        # Try to get from Streamlit secrets first
+        if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
+            return st.secrets['OPENAI_API_KEY']
+    except:
+        pass
+
+    # Try environment variable
+    import os
+    api_key = os.getenv('OPENAI_API_KEY')
+    if api_key:
+        return api_key
+
+    return None
+
+OPENAI_API_KEY = get_api_key()
 
 # GPT Sentiment Analysis Function
 def analyze_sentiment_gpt(text, api_key):
@@ -87,29 +105,23 @@ def analyze_sentiment_gpt(text, api_key):
         return {"error": str(e)}
 
 # Method Selection
-st.markdown("### ⚙️ Choose Analysis Method")
+st.markdown("### ⚙️ Analysis Methods Available")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("#### 🤖 GPT-4 Analysis (Recommended)")
+    st.markdown("#### 🤖 GPT-4 Analysis (Primary)")
     if not OPENAI_AVAILABLE:
         st.error("❌ OpenAI library not installed")
         st.code("pip install openai", language="bash")
+    elif not OPENAI_API_KEY:
+        st.warning("⚠️ API key not configured")
+        st.caption("Configure in .streamlit/secrets.toml")
     else:
-        api_key_input = st.text_input(
-            "Enter OpenAI API Key:",
-            type="password",
-            value=st.session_state.openai_api_key,
-            help="Get your API key from https://platform.openai.com/api-keys"
-        )
-        if api_key_input:
-            st.session_state.openai_api_key = api_key_input
-            st.success("✅ GPT-4 Analysis Ready")
-        else:
-            st.info("💡 Enter API key to enable GPT-4 analysis")
+        st.success("✅ GPT-4 Ready (Primary Method)")
+        st.caption("Using OpenAI gpt-4o-mini")
 
 with col2:
-    st.markdown("#### 📊 Classical ML Model")
+    st.markdown("#### 📊 Classical ML (Backup)")
     if not SKLEARN_AVAILABLE:
         st.error("❌ Scikit-learn not installed")
         st.code("pip install scikit-learn", language="bash")
@@ -169,13 +181,13 @@ if st.button("🔍 Analyze Sentiment", type="primary"):
         st.warning("⚠️ Please enter some text to analyze")
     else:
         # Determine which method to use
-        use_gpt = OPENAI_AVAILABLE and st.session_state.openai_api_key
+        use_gpt = OPENAI_AVAILABLE and OPENAI_API_KEY
         use_ml = SKLEARN_AVAILABLE and st.session_state.model_trained
 
         if use_gpt:
             # Use GPT Analysis
             with st.spinner("🤖 Analyzing with GPT-4..."):
-                result = analyze_sentiment_gpt(user_input, st.session_state.openai_api_key)
+                result = analyze_sentiment_gpt(user_input, OPENAI_API_KEY)
 
                 if "error" in result:
                     st.error(f"❌ Error: {result['error']}")
