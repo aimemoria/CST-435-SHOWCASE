@@ -46,6 +46,8 @@ if TF_AVAILABLE:
     if 'cnn_model' not in st.session_state:
         st.session_state.cnn_model = None
         st.session_state.cnn_trained = False
+        st.session_state.test_accuracy = 0
+        st.session_state.train_accuracy = 0
 
     col1, col2 = st.columns([1, 1])
     with col1:
@@ -129,18 +131,29 @@ if TF_AVAILABLE:
 
             st.session_state.cnn_model = model
             st.session_state.cnn_trained = True
+            st.session_state.test_accuracy = test_acc
+            st.session_state.train_accuracy = train_acc
 
-            st.success(f"✅ Training complete! Test Accuracy: {test_acc*100:.2f}% | Training Accuracy: {train_acc*100:.2f}%")
-            st.info(f"📊 Trained on {len(X_subset)} images for {train_epochs} epochs")
+        st.success(f"✅ Training complete! Test Accuracy: {test_acc*100:.2f}% | Training Accuracy: {train_acc*100:.2f}%")
+        st.info(f"📊 Trained on {len(X_subset)} images for {train_epochs} epochs")
 
-            # Show accuracy metrics
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Training Accuracy", f"{train_acc*100:.2f}%")
-            with col2:
-                st.metric("Test Accuracy", f"{test_acc*100:.2f}%")
-            with col3:
-                st.metric("Model Size", f"{len(X_subset):,} samples")
+        # Show accuracy metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Training Accuracy", f"{train_acc*100:.2f}%")
+        with col2:
+            st.metric("Test Accuracy", f"{test_acc*100:.2f}%")
+        with col3:
+            st.metric("Model Size", f"{len(X_subset):,} samples")
+
+    # Show previous training results if available
+    elif st.session_state.cnn_trained and st.session_state.test_accuracy > 0:
+        st.info(f"📊 Model trained! Test Accuracy: {st.session_state.test_accuracy*100:.2f}% | Training Accuracy: {st.session_state.train_accuracy*100:.2f}%")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Training Accuracy", f"{st.session_state.train_accuracy*100:.2f}%")
+        with col2:
+            st.metric("Test Accuracy", f"{st.session_state.test_accuracy*100:.2f}%")
 
     if st.session_state.cnn_model and st.session_state.cnn_trained:
         st.markdown("### 🖼️ Classify Image")
