@@ -1,0 +1,5 @@
+Go over my project folders and files, open them, if it is git repository link read  it and download its files in the folder. 
+after you will generate one single react home page that has all of my six projects posted/listed (i.e: folders ) on it. every project on my react home page should allow the user to open it and display a react page instead of it to display .ipynb file.
+i understand some of my projects were only built as .ipynb and has no react version ready to deploy however i want you build it now. (use react not .ipynb). if it has no react make sure you train my ai as it is required the build a react page for it that will be posted on single showcase home page.
+Design this react home page to allow it be deployed on streamlit as a single project even though it combines multiple projects. the purpose of this is that i wanna use free version of streamlit and it's free version only allows a single project to be deployed on it.
+

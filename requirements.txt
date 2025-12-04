@@ -1,0 +1,33 @@
+# Streamlit
+streamlit==1.40.0
+
+# Data Processing
+pandas==2.2.3
+numpy==2.3.3
+openpyxl==3.1.5
+
+# Machine Learning
+scikit-learn==1.7.2
+
+# Deep Learning (Optional - for CNN project)
+# Uncomment if you want to enable CNN training
+# tensorflow==2.20.0
+# keras==3.11.0
+
+# NLP (for Sentiment Analysis)
+nltk==3.9.1
+
+# Visualization
+matplotlib==3.10.0
+plotly==6.3.0
+seaborn==0.13.2
+
+# Image Processing
+Pillow==11.1.0
+
+# Web scraping (for text preprocessing)
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+# Utilities
+tqdm==4.67.1
