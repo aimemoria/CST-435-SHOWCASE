@@ -40,7 +40,7 @@ if SKLEARN_AVAILABLE:
         st.session_state.vectorizer = None
 
     if st.button("📥 Load Sentiment Model", type="primary"):
-        with st.spinner("Training model with 200+ examples..."):
+        with st.spinner("Training model with 350+ diverse examples..."):
             st.session_state.vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1, 2))
             st.session_state.sentiment_model = LogisticRegression(max_iter=1000, C=1.0)
 
@@ -91,6 +91,38 @@ if SKLEARN_AVAILABLE:
                 "This is great!", "So good!", "Really good!",
                 "Very nice!", "Pretty cool!", "Quite good!",
                 "Rather enjoyable!", "Fairly good!", "Reasonably well done!",
+                # Additional casual positive phrases
+                "Love this!", "Love it!", "Loved this!", "I love it!",
+                "Great stuff!", "Good stuff!", "Nice one!", "Cool!",
+                "Awesome!", "Sweet!", "Neat!", "Rad!", "Epic!",
+                "Fantastic!", "Fabulous!", "Splendid!", "Delightful!",
+                "Charming!", "Heartwarming!", "Touching!", "Moving!",
+                "Powerful!", "Gripping!", "Thrilling!", "Exciting!",
+                "Hilarious!", "Funny!", "Amusing!", "Witty!",
+                "Smart!", "Clever!", "Intelligent!", "Thoughtful!",
+                "Deep!", "Profound!", "Meaningful!", "Inspiring!",
+                "Beautiful!", "Gorgeous!", "Stunning!", "Breathtaking!",
+                "Flawless!", "Perfect!", "Impeccable!", "Polished!",
+                "Top notch!", "First rate!", "High quality!", "Premium!",
+                "Superb work!", "Magnificent film!", "Stellar performance!",
+                "Bravo!", "Kudos!", "Hats off!", "Applause!",
+                "Thumbs up!", "Two thumbs up!", "Five stars!",
+                "10 out of 10!", "Highly recommend!", "Must watch!",
+                "Don't miss this!", "Go see it!", "Check it out!",
+                "You'll love it!", "Worth your time!", "Money well spent!",
+                "Instant classic!", "Instant favorite!", "New favorite!",
+                "Best film!", "Best acting!", "Best director!",
+                "Oscar worthy!", "Award winning!", "Prize winning!",
+                "Cinematic gold!", "Pure magic!", "Pure genius!",
+                "Absolutely loved!", "Totally enjoyed!", "Completely satisfied!",
+                "Very pleased!", "Really happy!", "Thoroughly entertained!",
+                "Well worth it!", "Good value!", "Great choice!",
+                "No regrets!", "Glad I watched!", "Happy I saw this!",
+                "Would watch again!", "Will recommend!", "Telling everyone!",
+                "Sharing with friends!", "Family loved it!", "Everyone enjoyed!",
+                "Kids loved it!", "Adults loved it!", "Something for everyone!",
+                "Feel good movie!", "Uplifting!", "Joyful!", "Happy ending!",
+                "Satisfying!", "Rewarding!", "Fulfilling!", "Complete!",
             ]
 
             negative_texts = [
@@ -140,6 +172,41 @@ if SKLEARN_AVAILABLE:
                 "Rather boring!", "Fairly poor!", "Reasonably bad!",
                 "Couldn't stand it!", "Walked out!", "Wanted refund!",
                 "Total disappointment!", "Complete letdown!", "Utter failure!",
+                # Additional strong negative phrases
+                "Hate this!", "Hate it!", "Hated this!", "I hate it!",
+                "Awful stuff!", "Bad stuff!", "Terrible one!", "Worst!",
+                "Garbage!", "Trash!", "Rubbish!", "Junk!", "Crap!",
+                "Disgusting!", "Revolting!", "Repulsive!", "Offensive!",
+                "Annoying!", "Irritating!", "Frustrating!", "Infuriating!",
+                "Painful!", "Torturous!", "Agonizing!", "Unbearable!",
+                "Dreadful!", "Ghastly!", "Horrendous!", "Appalling!",
+                "Atrocious!", "Abominable!", "Deplorable!", "Contemptible!",
+                "Laughable!", "Ridiculous!", "Absurd!", "Nonsense!",
+                "Stupid!", "Dumb!", "Silly!", "Foolish!",
+                "Pointless!", "Meaningless!", "Worthless!", "Useless!",
+                "Shallow!", "Empty!", "Hollow!", "Vacuous!",
+                "Confusing!", "Messy!", "Chaotic!", "Disorganized!",
+                "Cheap!", "Tacky!", "Shoddy!", "Subpar!",
+                "Amateur!", "Unprofessional!", "Incompetent!", "Inept!",
+                "Terrible work!", "Horrible film!", "Awful performance!",
+                "Boo!", "Shame!", "Embarrassing!", "Disgrace!",
+                "Thumbs down!", "Zero stars!", "One star!",
+                "0 out of 10!", "Don't recommend!", "Skip this!",
+                "Avoid at all costs!", "Don't bother!", "Save yourself!",
+                "You'll hate it!", "Waste your time!", "Money wasted!",
+                "Instant regret!", "Instant dislike!", "New worst!",
+                "Worst film!", "Worst acting!", "Worst director!",
+                "Razzie worthy!", "Award for worst!", "Bottom tier!",
+                "Cinematic disaster!", "Pure torture!", "Pure garbage!",
+                "Absolutely hated!", "Totally disliked!", "Completely dissatisfied!",
+                "Very displeased!", "Really unhappy!", "Thoroughly bored!",
+                "Not worth it!", "Bad value!", "Poor choice!",
+                "Full of regrets!", "Wish I didn't watch!", "Sorry I saw this!",
+                "Won't watch again!", "Won't recommend!", "Warning everyone!",
+                "Telling friends to avoid!", "Family hated it!", "Everyone disliked!",
+                "Kids hated it!", "Adults hated it!", "Nobody enjoyed!",
+                "Depressing movie!", "Draining!", "Miserable!", "Sad ending!",
+                "Unsatisfying!", "Unrewarding!", "Empty!", "Incomplete!",
             ]
 
             # Combine texts and create labels
