@@ -104,73 +104,47 @@ def analyze_sentiment_gpt(text, api_key):
     except Exception as e:
         return {"error": str(e)}
 
-# Method Selection
-st.markdown("### ⚙️ Analysis Methods Available")
-col1, col2 = st.columns(2)
+# Auto-train classical ML model on first load (silent fallback)
+if SKLEARN_AVAILABLE and not st.session_state.model_trained:
+    st.session_state.vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1, 2))
+    st.session_state.sentiment_model = LogisticRegression(max_iter=1000, C=1.0)
 
-with col1:
-    st.markdown("#### 🤖 GPT-4 Analysis (Primary)")
-    if not OPENAI_AVAILABLE:
-        st.error("❌ OpenAI library not installed")
-        st.code("pip install openai", language="bash")
-    elif not OPENAI_API_KEY:
-        st.warning("⚠️ API key not configured")
-        st.caption("Configure in .streamlit/secrets.toml")
-    else:
-        st.success("✅ GPT-4 Ready (Primary Method)")
-        st.caption("Using OpenAI gpt-4o-mini")
+    # Comprehensive training dataset
+    positive_texts = [
+        "Fantastic! Loved it.", "Amazing! Highly recommended.", "Best ever!", "Great job!",
+        "Well done!", "Nice work!", "Excellent!", "Superb!", "Outstanding!", "Brilliant!",
+        "Perfect!", "Wonderful!", "Awesome!", "Magnificent!", "Spectacular!", "Terrific!",
+        "Good!", "Great!", "Love it!", "Cool!", "Epic!", "Sweet!", "Rad!", "Fabulous!",
+        "Delightful!", "Charming!", "Heartwarming!", "Touching!", "Powerful!", "Gripping!",
+        "Thrilling!", "Exciting!", "Hilarious!", "Funny!", "Clever!", "Smart!", "Beautiful!",
+        "Gorgeous!", "Stunning!", "Breathtaking!", "Flawless!", "Impeccable!", "Premium!",
+        "Five stars!", "Thumbs up!", "Must watch!", "Highly recommend!", "Oscar worthy!",
+        "Masterpiece!", "Pure genius!", "Loved!", "Enjoyed!", "Satisfied!", "Happy!", "Joyful!",
+        "Good job on this!", "Really enjoyed it!", "Very entertaining!", "Worth watching!",
+        "Great experience!", "Well worth it!", "No regrets!", "Instant classic!", "Amazing work!",
+    ] * 3
 
-with col2:
-    st.markdown("#### 📊 Classical ML (Backup)")
-    if not SKLEARN_AVAILABLE:
-        st.error("❌ Scikit-learn not installed")
-        st.code("pip install scikit-learn", language="bash")
-    else:
-        if st.button("📥 Train Classical Model"):
-            with st.spinner("Training with 350+ examples..."):
-                st.session_state.vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1, 2))
-                st.session_state.sentiment_model = LogisticRegression(max_iter=1000, C=1.0)
+    negative_texts = [
+        "Terrible!", "Awful!", "Horrible!", "Worst ever!", "Bad!", "Poor!", "Disappointing!",
+        "Boring!", "Dull!", "Weak!", "Pathetic!", "Dreadful!", "Disgusting!", "Atrocious!",
+        "Miserable!", "Mediocre!", "Underwhelming!", "Lame!", "Garbage!", "Trash!", "Rubbish!",
+        "Hate it!", "Waste of time!", "Don't recommend!", "Avoid!", "Skip this!", "Regret!",
+        "Not good!", "Very bad!", "Poor quality!", "Terrible acting!", "Awful script!",
+        "Predictable!", "Cliché!", "Generic!", "Unoriginal!", "Stale!", "Tired!", "Annoying!",
+        "Frustrating!", "Painful!", "Unbearable!", "Ghastly!", "Appalling!", "Ridiculous!",
+        "Stupid!", "Pointless!", "Worthless!", "Useless!", "Confusing!", "Messy!", "Cheap!",
+        "Amateur!", "Zero stars!", "Thumbs down!", "Don't watch!", "Total disaster!",
+        "Pure garbage!", "Hated!", "Disliked!", "Disappointed!", "Unhappy!", "Sad!", "Depressing!",
+        "This is bad!", "Really terrible!", "Very poor!", "Not worth it!", "Bad experience!",
+        "Waste of money!", "Regret watching!", "Couldn't finish!", "Walked out!", "Boring film!",
+    ] * 3
 
-                # Comprehensive training dataset
-                positive_texts = [
-                    "Fantastic! Loved it.", "Amazing! Highly recommended.", "Best ever!", "Great job!",
-                    "Well done!", "Nice work!", "Excellent!", "Superb!", "Outstanding!", "Brilliant!",
-                    "Perfect!", "Wonderful!", "Awesome!", "Magnificent!", "Spectacular!", "Terrific!",
-                    "Good!", "Great!", "Love it!", "Cool!", "Epic!", "Sweet!", "Rad!", "Fabulous!",
-                    "Delightful!", "Charming!", "Heartwarming!", "Touching!", "Powerful!", "Gripping!",
-                    "Thrilling!", "Exciting!", "Hilarious!", "Funny!", "Clever!", "Smart!", "Beautiful!",
-                    "Gorgeous!", "Stunning!", "Breathtaking!", "Flawless!", "Impeccable!", "Premium!",
-                    "Five stars!", "Thumbs up!", "Must watch!", "Highly recommend!", "Oscar worthy!",
-                    "Masterpiece!", "Pure genius!", "Loved!", "Enjoyed!", "Satisfied!", "Happy!", "Joyful!",
-                    "Good job on this!", "Really enjoyed it!", "Very entertaining!", "Worth watching!",
-                    "Great experience!", "Well worth it!", "No regrets!", "Instant classic!", "Amazing work!",
-                ] * 3  # Tripled for more training data
+    all_texts = positive_texts + negative_texts
+    all_labels = [1] * len(positive_texts) + [0] * len(negative_texts)
 
-                negative_texts = [
-                    "Terrible!", "Awful!", "Horrible!", "Worst ever!", "Bad!", "Poor!", "Disappointing!",
-                    "Boring!", "Dull!", "Weak!", "Pathetic!", "Dreadful!", "Disgusting!", "Atrocious!",
-                    "Miserable!", "Mediocre!", "Underwhelming!", "Lame!", "Garbage!", "Trash!", "Rubbish!",
-                    "Hate it!", "Waste of time!", "Don't recommend!", "Avoid!", "Skip this!", "Regret!",
-                    "Not good!", "Very bad!", "Poor quality!", "Terrible acting!", "Awful script!",
-                    "Predictable!", "Cliché!", "Generic!", "Unoriginal!", "Stale!", "Tired!", "Annoying!",
-                    "Frustrating!", "Painful!", "Unbearable!", "Ghastly!", "Appalling!", "Ridiculous!",
-                    "Stupid!", "Pointless!", "Worthless!", "Useless!", "Confusing!", "Messy!", "Cheap!",
-                    "Amateur!", "Zero stars!", "Thumbs down!", "Don't watch!", "Total disaster!",
-                    "Pure garbage!", "Hated!", "Disliked!", "Disappointed!", "Unhappy!", "Sad!", "Depressing!",
-                    "This is bad!", "Really terrible!", "Very poor!", "Not worth it!", "Bad experience!",
-                    "Waste of money!", "Regret watching!", "Couldn't finish!", "Walked out!", "Boring film!",
-                ] * 3  # Tripled for more training data
-
-                all_texts = positive_texts + negative_texts
-                all_labels = [1] * len(positive_texts) + [0] * len(negative_texts)
-
-                X_train = st.session_state.vectorizer.fit_transform(all_texts)
-                st.session_state.sentiment_model.fit(X_train, all_labels)
-                st.session_state.model_trained = True
-
-                st.success(f"✅ Model trained with {len(all_texts)} examples!")
-
-st.markdown("---")
+    X_train = st.session_state.vectorizer.fit_transform(all_texts)
+    st.session_state.sentiment_model.fit(X_train, all_labels)
+    st.session_state.model_trained = True
 
 # Sentiment Analysis Interface
 st.markdown("### 💬 Analyze Text Sentiment")
@@ -185,12 +159,33 @@ if st.button("🔍 Analyze Sentiment", type="primary"):
         use_ml = SKLEARN_AVAILABLE and st.session_state.model_trained
 
         if use_gpt:
-            # Use GPT Analysis
-            with st.spinner("🤖 Analyzing with GPT-4..."):
+            # Use GPT Analysis (silently)
+            with st.spinner("Analyzing sentiment..."):
                 result = analyze_sentiment_gpt(user_input, OPENAI_API_KEY)
 
                 if "error" in result:
-                    st.error(f"❌ Error: {result['error']}")
+                    # Fallback to ML if GPT fails
+                    if use_ml:
+                        X_input = st.session_state.vectorizer.transform([user_input])
+                        prediction = st.session_state.sentiment_model.predict(X_input)[0]
+                        probability = st.session_state.sentiment_model.predict_proba(X_input)[0]
+
+                        if prediction == 1:
+                            st.success("### 😊 POSITIVE Sentiment")
+                            confidence = probability[1] * 100
+                        else:
+                            st.error("### 😞 NEGATIVE Sentiment")
+                            confidence = probability[0] * 100
+
+                        st.metric("Confidence", f"{confidence:.1f}%")
+
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Negative Probability", f"{probability[0]*100:.1f}%")
+                        with col2:
+                            st.metric("Positive Probability", f"{probability[1]*100:.1f}%")
+                    else:
+                        st.error(f"❌ Error analyzing sentiment")
                 else:
                     sentiment = result.get("sentiment", "unknown")
                     confidence = result.get("confidence", 0)
@@ -203,12 +198,11 @@ if st.button("🔍 Analyze Sentiment", type="primary"):
                         st.error(f"### 😞 NEGATIVE Sentiment")
                         st.metric("Confidence", f"{confidence}%")
 
-                    st.info(f"**Reasoning:** {reasoning}")
-                    st.caption("🤖 Analyzed using GPT-4")
+                    st.info(f"**Analysis:** {reasoning}")
 
         elif use_ml:
-            # Use Classical ML
-            with st.spinner("📊 Analyzing with Classical ML..."):
+            # Use Classical ML as fallback
+            with st.spinner("Analyzing sentiment..."):
                 X_input = st.session_state.vectorizer.transform([user_input])
                 prediction = st.session_state.sentiment_model.predict(X_input)[0]
                 probability = st.session_state.sentiment_model.predict_proba(X_input)[0]
@@ -228,10 +222,8 @@ if st.button("🔍 Analyze Sentiment", type="primary"):
                 with col2:
                     st.metric("Positive Probability", f"{probability[1]*100:.1f}%")
 
-                st.caption("📊 Analyzed using Classical ML Model")
-
         else:
-            st.warning("⚠️ Please set up GPT-4 API key or train the Classical ML model first")
+            st.error("❌ Sentiment analysis not available")
 
 st.markdown("---")
 st.markdown("### 📝 Example Texts")
