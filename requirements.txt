@@ -9,10 +9,9 @@ openpyxl==3.1.5
 # Machine Learning
 scikit-learn==1.7.2
 
-# Deep Learning (Optional - for CNN project)
-# Uncomment if you want to enable CNN training
-# tensorflow==2.20.0
-# keras==3.11.0
+# Deep Learning (for CNN project)
+tensorflow==2.20.0
+keras==3.11.0
 
 # NLP (for Sentiment Analysis)
 nltk==3.9.1
