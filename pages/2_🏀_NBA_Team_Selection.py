@@ -50,16 +50,34 @@ if not os.path.exists(data_file):
 
 @st.cache_data
 def load_data():
-    return pd.read_excel("all_seasons.csv.xlsx", sheet_name="all_seasons")
+    """Load NBA data with robust error handling"""
+    try:
+        # Try loading with sheet name first
+        df = pd.read_excel("all_seasons.csv.xlsx", sheet_name="all_seasons")
+        return df
+    except:
+        # Try loading without sheet name (first sheet)
+        try:
+            df = pd.read_excel("all_seasons.csv.xlsx")
+            return df
+        except Exception as e:
+            st.error(f"Failed to load Excel: {str(e)}")
+            raise
 
 @st.cache_data
 def prepare_player_pool(data):
     seasons = ['2018-19', '2019-20', '2020-21', '2021-22', '2022-23']
     filtered = data[data['season'].isin(seasons)].copy()
     filtered = filtered[filtered['gp'] >= 20]
-    filtered['composite_score'] = (filtered['pts'] * 0.3 + filtered['reb'] * 0.25 +
-                                   filtered['ast'] * 0.25 + filtered['net_rating'] * 0.1 +
-                                   filtered['ts_pct'] * 10 * 0.1)
+
+    # Handle missing columns gracefully
+    filtered['composite_score'] = (
+        filtered['pts'] * 0.3 +
+        filtered['reb'] * 0.25 +
+        filtered['ast'] * 0.25 +
+        filtered.get('net_rating', 0) * 0.1 +
+        filtered.get('ts_pct', 0.5) * 10 * 0.1
+    )
     player_best = filtered.sort_values('composite_score', ascending=False).groupby('player_name').first().reset_index()
     return player_best.nlargest(100, 'composite_score').reset_index(drop=True)
 
@@ -155,9 +173,10 @@ def create_features(df):
 
 try:
     data = load_data()
-    st.success("DONE: Data loaded successfully!")
-except:
-    st.error("❌ Error loading data")
+    st.success(f"DONE: Data loaded successfully! ({len(data)} rows)")
+except Exception as e:
+    st.error(f"❌ Error loading data: {str(e)}")
+    st.info("Please ensure 'all_seasons.csv.xlsx' is in the project directory or upload it above.")
     st.stop()
 
 with st.spinner("Preparing player pool..."):
@@ -209,25 +228,46 @@ if st.button("🚀 Train & Select Team", type="primary"):
 
     progress_bar = st.progress(0)
     status = st.empty()
-    history = {'loss': []}
+    history = {'loss': [], 'accuracy': []}
+
     for epoch in range(epochs):
         indices = np.random.permutation(100)
         y_pred = mlp.forward_propagation(X_scaled[indices])
         loss = mlp.compute_loss(y_pred, y_labels[indices])
+
+        # Calculate accuracy
+        pred_classes = np.argmax(y_pred, axis=1)
+        true_classes = np.argmax(y_labels[indices], axis=1)
+        accuracy = np.mean(pred_classes == true_classes) * 100
+
         history['loss'].append(loss)
+        history['accuracy'].append(accuracy)
+
         dW, db = mlp.backward_propagation(X_scaled[indices], y_labels[indices], y_pred)
         mlp.update_weights(dW, db)
-        progress_bar.progress((epoch + 1) / epochs)
-        status.text(f"Epoch {epoch + 1}/{epochs} - Loss: {loss:.4f}")
 
-    st.success("DONE: Training complete!")
+        progress_bar.progress((epoch + 1) / epochs)
+        status.text(f"Epoch {epoch + 1}/{epochs} - Loss: {loss:.4f} - Accuracy: {accuracy:.1f}%")
+
+    final_accuracy = history['accuracy'][-1]
+    st.success(f"DONE: Training complete! Final Accuracy: {final_accuracy:.1f}%")
 
     st.markdown("### 📊 Results")
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=list(range(1, len(history['loss']) + 1)), y=history['loss'],
-                            mode='lines', name='Loss', line=dict(color='blue', width=2)))
-    fig.update_layout(title="Training Loss", xaxis_title="Epoch", yaxis_title="Loss", height=400)
-    st.plotly_chart(fig, use_container_width=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        fig_loss = go.Figure()
+        fig_loss.add_trace(go.Scatter(x=list(range(1, len(history['loss']) + 1)), y=history['loss'],
+                                mode='lines', name='Loss', line=dict(color='blue', width=2)))
+        fig_loss.update_layout(title="Training Loss", xaxis_title="Epoch", yaxis_title="Loss", height=350)
+        st.plotly_chart(fig_loss, use_container_width=True)
+
+    with col2:
+        fig_acc = go.Figure()
+        fig_acc.add_trace(go.Scatter(x=list(range(1, len(history['accuracy']) + 1)), y=history['accuracy'],
+                                mode='lines', name='Accuracy', line=dict(color='green', width=2)))
+        fig_acc.update_layout(title="Training Accuracy", xaxis_title="Epoch", yaxis_title="Accuracy (%)", height=350)
+        st.plotly_chart(fig_acc, use_container_width=True)
 
     st.markdown("### 🏆 Selected Team")
     _, position_probs = mlp.predict(X_scaled)
