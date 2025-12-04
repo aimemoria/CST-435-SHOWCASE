@@ -70,6 +70,13 @@ if TF_AVAILABLE:
             X_subset = X_train[indices].astype('float32') / 255.0
             y_subset = keras.utils.to_categorical(y_train[indices], 10)
 
+            # Split into train and validation sets
+            split_idx = int(len(X_subset) * 0.85)
+            X_train_split = X_subset[:split_idx]
+            y_train_split = y_subset[:split_idx]
+            X_val_split = X_subset[split_idx:]
+            y_val_split = y_subset[split_idx:]
+
             # Data augmentation for better accuracy
             from tensorflow.keras.preprocessing.image import ImageDataGenerator
             datagen = ImageDataGenerator(
@@ -78,7 +85,6 @@ if TF_AVAILABLE:
                 height_shift_range=0.1,
                 horizontal_flip=True
             )
-            datagen.fit(X_subset)
 
             # Improved CNN model architecture
             model = keras.Sequential([
@@ -110,16 +116,18 @@ if TF_AVAILABLE:
                 keras.layers.Dense(10, activation='softmax')
             ])
 
-            # Use Adam optimizer with learning rate decay
+            # Use Adam optimizer
             optimizer = keras.optimizers.Adam(learning_rate=0.001)
             model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
             # Train with data augmentation
-            history = model.fit(datagen.flow(X_subset, y_subset, batch_size=64),
-                              epochs=train_epochs,
-                              validation_split=0.15,
-                              verbose=0,
-                              steps_per_epoch=len(X_subset) // 64)
+            history = model.fit(
+                datagen.flow(X_train_split, y_train_split, batch_size=64),
+                epochs=train_epochs,
+                validation_data=(X_val_split, y_val_split),
+                verbose=0,
+                steps_per_epoch=len(X_train_split) // 64
+            )
 
             # Evaluate on test set (larger subset for accurate measurement)
             X_test_subset = X_test[:2000].astype('float32') / 255.0
